@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using english_learning_server.Dtos.Profile;
 using english_learning_server.Models;
 
@@ -17,6 +13,16 @@ namespace english_learning_server.Mappers
                 Sex = profileModel.Sex,
                 Birthday = profileModel.Birthday,
                 Status = profileModel.Status,
+            };
+        }
+
+        public static UpdateProfileDto ToProfileFromUpdate(this UpdateProfileDto updateProfileDto)
+        {
+            return new UpdateProfileDto
+            {
+                Sex = updateProfileDto.Sex,
+                Birthday = updateProfileDto.Birthday,
+                Status = updateProfileDto.Status,
             };
         }
     }
