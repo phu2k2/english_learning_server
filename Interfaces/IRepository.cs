@@ -124,5 +124,10 @@ namespace english_learning_server.Interfaces
         /// Count by condition
         /// </summary>
         Task<int> CountAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Save changes
+        /// </summary>
+        Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
 }

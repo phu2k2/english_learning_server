@@ -7,10 +7,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace english_learning_server.Controllers
 {
-    [Route("api/account")]
     [ApiController]
+    [Route("api/users")]
     public class AccountController : ControllerBase
     {
+        private readonly ILogger<AccountController> _logger;
         private readonly UserManager<User> _userManager;
 
         private readonly ITokenService _tokenService;
@@ -19,8 +20,9 @@ namespace english_learning_server.Controllers
 
         private readonly IProfileRepository _profileRepo;
 
-        public AccountController(UserManager<User> userManager, ITokenService tokenService, SignInManager<User> signInManager, IProfileRepository profileRepo)
-        {
+        public AccountController(ILogger<AccountController> logger, UserManager<User> userManager, ITokenService tokenService, SignInManager<User> signInManager, IProfileRepository profileRepo)
+        {   
+            _logger = logger;
             _userManager = userManager;
             _tokenService = tokenService;
             _signInManager = signInManager;

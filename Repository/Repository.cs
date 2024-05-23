@@ -131,5 +131,10 @@ namespace english_learning_server.Repository
         {
             return await _context.Set<TEntity>().CountAsync(predicate, cancellationToken).ConfigureAwait(false);
         }
+
+        public async Task<int> SaveChangesAsync(CancellationToken cancellationToken)
+        {
+            return await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        }
     }
 }
