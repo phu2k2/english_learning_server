@@ -2,6 +2,7 @@ using english_learning_server.Interfaces;
 using english_learning_server.Mappers;
 using english_learning_server.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace english_learning_server.Controllers
 {
@@ -10,7 +11,6 @@ namespace english_learning_server.Controllers
     public class TopicController : ControllerBase
     {
         private readonly IRepository<Topic> _topicRepo;
-
         private readonly IRepository<Game> _gameRepo;
 
         public TopicController(IRepository<Topic> topicRepo, IRepository<Game> gameRepo)
@@ -31,7 +31,7 @@ namespace english_learning_server.Controllers
 
                 if (topics is null)
                 {
-                    return NotFound();
+                    return NotFound("Topics not found");
                 }
 
                 var topicDto = topics.Select(t => t.ToTopicDto()).ToList();
@@ -45,6 +45,7 @@ namespace english_learning_server.Controllers
         }
 
         [HttpGet("{topicId:guid}/games")]
+        [Authorize]
         public async Task<IActionResult> GetGamesByTopic([FromRoute] Guid topicId, CancellationToken cancellationToken)
         {
             try
