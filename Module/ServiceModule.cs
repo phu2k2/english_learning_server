@@ -2,7 +2,6 @@ namespace Grwm.Module
 {
     using Autofac;
     using english_learning_server.Interfaces;
-    using english_learning_server.Repository;
     using english_learning_server.Service;
 
     public class ServiceModule : Module
@@ -12,6 +11,21 @@ namespace Grwm.Module
             builder
             .RegisterType<TokenService>()
             .As<ITokenService>()
+            .SingleInstance();
+
+            builder
+            .RegisterType<EmailService>()
+            .As<IEmailService>()
+            .SingleInstance();
+
+            builder
+            .RegisterType<LangChainService>()
+            .As<ILangChainService>()
+            .SingleInstance();
+
+            builder
+            .RegisterType<GoogleCloudService>()
+            .As<IGoogleCloudService>()
             .SingleInstance();
         }
     }

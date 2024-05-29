@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Threading.Tasks;
+using english_learning_server.Dtos.Option;
 
 namespace english_learning_server.Dtos.Game
 {
@@ -19,5 +15,7 @@ namespace english_learning_server.Dtos.Game
         public string? SoundFilePath { get; set; }
 
         public Guid TopicId { get; set; }
+
+        public List<OptionDto> options { get; set; } = new List<OptionDto>();
     }
 }

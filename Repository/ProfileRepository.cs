@@ -1,7 +1,6 @@
 using english_learning_server.Data;
 using english_learning_server.Interfaces;
 using english_learning_server.Models;
-using Microsoft.EntityFrameworkCore;
 
 namespace english_learning_server.Repository
 {
