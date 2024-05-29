@@ -9,7 +9,8 @@ using Microsoft.OpenApi.Models;
 using Autofac.Extensions.DependencyInjection;
 using Autofac;
 using Grwm.Module;
-using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using LangChain.Providers.Google;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();
@@ -45,6 +46,10 @@ builder.Services.AddSwaggerGen(option =>
             new string[]{}
         }
     });
+
+    // Set the comments path for the Swagger JSON and UI.
+    var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    option.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
 });
 
 var connectionString = builder.Configuration.GetConnectionString("MySqlConn");
@@ -88,6 +93,8 @@ builder.Services.AddAuthentication(options =>
         };
     });
 
+builder.Services.AddSingleton<GoogleProvider>();
+
 builder.Services.AddControllers();
 
 builder.Host
@@ -97,6 +104,10 @@ builder.Host
         container.RegisterModule<RepositoryModule>();
         container.RegisterModule<ServiceModule>();
     });
+
+var googleCloudCredentialsPath = builder.Configuration["GoogleCloud:Credentials"];
+
+Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", Path.Combine(Directory.GetCurrentDirectory(), googleCloudCredentialsPath));
 
 var app = builder.Build();
 

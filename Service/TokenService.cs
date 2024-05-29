@@ -11,7 +11,6 @@ namespace english_learning_server.Service
     {
         private readonly IConfiguration _config;
         private readonly SymmetricSecurityKey _key;
-
         public TokenService(IConfiguration config)
         {
             _config = config;
