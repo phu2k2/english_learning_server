@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using english_learning_server.Dtos.Game;
 using english_learning_server.Dtos.Option;
 using english_learning_server.Models;
@@ -24,9 +20,18 @@ namespace english_learning_server.Mappers
                 options = gameModel.Options.Select(o => new OptionDto
                 {
                     Id = o.Id,
-                    gameId = gameModel.Id,
+                    GameId = gameModel.Id,
                     Name = o.Name
                 }).ToList()
+            };
+        }
+
+        public static GameTopicDto ToGameTopicDto(this Game gameModel, Guid topicId)
+        {
+            return new GameTopicDto
+            {
+                GameId = gameModel.Id,
+                TopicId = topicId
             };
         }
     }

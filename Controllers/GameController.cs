@@ -36,7 +36,7 @@ namespace english_learning_server.Controllers
             using var memoryStream = new MemoryStream();
             await audioFile.CopyToAsync(memoryStream);
 
-            var mediaLink = await _googleCloudService.UploadFileToBucket(fileName, memoryStream,"audio/wav");
+            var mediaLink = await _googleCloudService.UploadFileToBucket(fileName, memoryStream, "audio/wav");
 
             return Ok(new { MediaLink = mediaLink });
         }
@@ -47,7 +47,7 @@ namespace english_learning_server.Controllers
             string transcribedText = await _googleCloudService.TransSpeechToText(translateVoiceDto.WavFileGcsUri);
 
             return Ok(
-                new 
+                new
                 {
                     success = true,
                     text = transcribedText

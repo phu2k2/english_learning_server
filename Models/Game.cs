@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Google.Api.Gax;
 using Microsoft.EntityFrameworkCore;
 
 namespace english_learning_server.Models;
@@ -36,4 +37,15 @@ public partial class Game
     [ForeignKey("TopicId")]
     [InverseProperty("Games")]
     public virtual Topic Topic { get; set; } = null!;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Game"/> class
+    /// </summary>
+    public Game(string? kind, string? question, string? rightAnswer, Guid topicId)
+    {
+        Kind = kind;
+        Question = question;
+        RightAnswer = rightAnswer;
+        TopicId = topicId;
+    }
 }

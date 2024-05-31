@@ -4,11 +4,8 @@ namespace english_learning_server.Dtos.Option
 {
     public class OptionDto
     {
-        [Required]
         public Guid Id { get; set; }
-        [Required]
-        public Guid gameId {get; set;}
-        [Required]
+        public Guid GameId {get; set;}
         public string Name { get; set; }
     }
 }

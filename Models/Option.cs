@@ -21,4 +21,13 @@ public partial class Option
     [ForeignKey("GameId")]
     [InverseProperty("Options")]
     public virtual Game Game { get; set; } = null!;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Option"/> class
+    /// </summary>
+    public Option(Guid gameId, string name)
+    {
+        GameId = gameId;
+        Name = name;
+    }
 }

@@ -19,7 +19,7 @@ namespace english_learning_server.Controllers
         private readonly IProfileRepository _profileRepo;
 
         public AccountController(UserManager<User> userManager, ITokenService tokenService, IEmailService emailService, SignInManager<User> signInManager, IProfileRepository profileRepo)
-        {   
+        {
             _userManager = userManager;
             _tokenService = tokenService;
             _emailService = emailService;
@@ -122,7 +122,8 @@ namespace english_learning_server.Controllers
 
         [HttpPost("signOut")]
         [Authorize]
-        public async Task<IActionResult> LogOut() {
+        public async Task<IActionResult> LogOut()
+        {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -156,7 +157,7 @@ namespace english_learning_server.Controllers
 
             var user = await _userManager.FindByEmailAsync(forgotPasswordDto.Email);
 
-            if (user == null || !(await _userManager.IsEmailConfirmedAsync(user)))
+            if (user == null)
             {
                 return NotFound("User not found");
             }
