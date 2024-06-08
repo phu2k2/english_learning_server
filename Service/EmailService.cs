@@ -18,7 +18,7 @@ namespace english_learning_server.Service
             using (var emailClient = new SmtpClient())
             {
                 emailClient.Connect("smtp.gmail.com", 587, MailKit.Security.SecureSocketOptions.StartTls);
-                emailClient.Authenticate("phunguyen291002@gmail.com", "Phu29100211@1");
+                emailClient.Authenticate("phunguyen291002@gmail.com", "kglt fkhm wqak wqat");
                 emailClient.Send(emailToSend);
                 emailClient.Disconnect(true);
             }

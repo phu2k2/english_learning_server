@@ -16,7 +16,7 @@ public partial class ProfileGame
 
     public Guid GameId { get; set; }
 
-    public bool IsPlayed { get; set; }
+    public bool? IsPlayed { get; set; }
 
     [ForeignKey("GameId")]
     [InverseProperty("ProfileGames")]

@@ -18,6 +18,9 @@ public partial class Option
     [StringLength(255)]
     public string Name { get; set; } = null!;
 
+    [StringLength(255)]
+    public string? PhotoFilePath { get; set; }
+
     [ForeignKey("GameId")]
     [InverseProperty("Options")]
     public virtual Game Game { get; set; } = null!;
