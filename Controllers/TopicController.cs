@@ -1,25 +1,42 @@
+using api.Extensions;
+using english_learning_server.Dtos.Game;
+using english_learning_server.Dtos.Topic;
+using english_learning_server.Dtos.Topic.Response;
+using english_learning_server.Failure;
 using english_learning_server.Interfaces;
 using english_learning_server.Mappers;
 using english_learning_server.Models;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace english_learning_server.Controllers
 {
     [ApiController]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ApiErrorResponse))]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiErrorResponse))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ApiErrorResponse))]
     [Route("api/topics")]
-    public class TopicController : ControllerBase
+    [Authorize]
+    public class TopicController : ApiControllerBase
     {
         private readonly IRepository<Topic> _topicRepo;
         private readonly IRepository<Game> _gameRepo;
 
-        public TopicController(IRepository<Topic> topicRepo, IRepository<Game> gameRepo)
+        private readonly IRepository<Profile> _profileRepo;
+
+        public TopicController(IRepository<Topic> topicRepo, IRepository<Game> gameRepo, IRepository<Profile> profileRepo)
         {
             _gameRepo = gameRepo;
             _topicRepo = topicRepo;
+            _profileRepo = profileRepo;
         }
 
+        /// <summary>
+        /// Get list of topics
+        /// </summary>
         [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GetTopicsResponseDto))]
         public async Task<IActionResult> GetAllTopic()
         {
             try
@@ -27,41 +44,24 @@ namespace english_learning_server.Controllers
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
 
-                var topics = _topicRepo.GetAll().ToList();
+                var topics = _topicRepo.GetAll().Include(t => t.Games).ThenInclude(g => g.ProfileGames).ToList();
 
                 if (topics is null)
                 {
-                    return NotFound("Topics not found");
+                    return NotFoundResponse("Topics not found");
                 }
 
-                var topicDto = topics.Select(t => t.ToTopicDto()).ToList();
+                var userId = User.GetUsername();
 
-                return Ok(topicDto);
+                var profileId = _profileRepo.GetFirstOrDefault(x => x.UserId == userId);
+
+                var topicsDto = topics.ToTopicsResponseDto(profileId.Id);
+
+                return Ok(topicsDto);
             }
             catch (Exception e)
             {
-                return StatusCode(500, e.Message);
-            }
-        }
-
-        [HttpGet("{topicId:guid}/games")]
-        [Authorize]
-        public async Task<IActionResult> GetGamesByTopic([FromRoute] Guid topicId, CancellationToken cancellationToken)
-        {
-            try
-            {
-                if (!ModelState.IsValid)
-                    return BadRequest(ModelState);
-
-                var games = await _gameRepo.GetWhereAsync(x => x.TopicId == topicId, cancellationToken).ConfigureAwait(false);
-
-                var gamesDto = games.Select(x => x.ToGameDto(topicId)).ToList();
-
-                return Ok(gamesDto);
-            }
-            catch (Exception e)
-            {
-                return StatusCode(500, e.Message);
+                return InternalServerErrorResponse(e.Message);
             }
         }
     }

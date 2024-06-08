@@ -1,3 +1,6 @@
+using api.Extensions;
+using english_learning_server.Dtos.Common;
+using english_learning_server.Failure;
 using english_learning_server.Interfaces;
 using english_learning_server.Mappers;
 using english_learning_server.Models;
@@ -6,8 +9,11 @@ using Microsoft.AspNetCore.Mvc;
 namespace english_learning_server.Controllers
 {
     [ApiController]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ApiErrorResponse))]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiErrorResponse))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ApiErrorResponse))]
     [Route("api/generation")]
-    public class DataGenerationController : ControllerBase
+    public class DataGenerationController : ApiControllerBase
     {
         private readonly IRepository<Topic> _topicRepo;
         private readonly IRepository<Game> _gameRepo;
@@ -22,9 +28,10 @@ namespace english_learning_server.Controllers
         }
 
         /// <summary>
-        /// Generate question for game by topic
+        /// Generate games by topic
         /// </summary>
         [HttpPost("topics/{topicId:guid}/games")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse))]
         public async Task<IActionResult> createGamesByTopic([FromRoute] Guid topicId, CancellationToken cancellationToken = default)
         {
             try
@@ -36,7 +43,7 @@ namespace english_learning_server.Controllers
 
                 if (topic == null)
                 {
-                    return NotFound();
+                    return NotFoundResponse("Topic not found");
                 }
 
                 var basePictureChoiceGames = await _langChainService.FetchGamesForPictureChoiceByTopic(topicId, topic.Name).ConfigureAwait(false);
@@ -48,24 +55,19 @@ namespace english_learning_server.Controllers
 
                 await _gameRepo.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-                return Ok(
-                    new
-                    {
-                        success = true,
-                        message = "Games created successfully"
-                    }
-                );
+                return Ok( new ApiResponse { Message = "Games created successfully" });
             }
             catch (Exception e)
             {
-                return StatusCode(500, e.Message);
+                return InternalServerErrorResponse(e.Message);
             }
         }
 
         /// <summary>
-        /// Generate question for option by game
+        /// Generate options for sentence scramble games by topic
         /// </summary>
         [HttpPost("topics/{topicId:guid}/options/scrambleGame")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse))]
         public async Task<IActionResult> createOptionsForSentenceScrambleByTopic([FromRoute] Guid topicId, CancellationToken cancellationToken = default)
         {
             try
@@ -88,21 +90,20 @@ namespace english_learning_server.Controllers
 
                 await _optionRepo.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-                return Ok(
-                    new
-                    {
-                        success = true,
-                        message = "Options created successfully"
-                    }
-                );
+                return Ok( new ApiResponse { Message = "Options created successfully" });
             }
             catch (Exception e)
             {
-                return StatusCode(500, e.Message);
+                return InternalServerErrorResponse(e.Message);
             }
         }
 
+
+        /// <summary>
+        /// Generate options for picture choice games by topic
+        /// </summary>
         [HttpPost("topics/{topicId:guid}/options/pictureChoice")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse))]
         public async Task<IActionResult> createOptionsForPictureChoiceByTopic([FromRoute] Guid topicId, CancellationToken cancellationToken = default)
         {
             try
@@ -116,7 +117,7 @@ namespace english_learning_server.Controllers
 
                 if (games == null || topic == null)
                 {
-                    return NotFound();
+                    return NotFoundResponse("Games or Topics not found");
                 }
 
                 var baseOptions = await _langChainService.FetchOptionForPictureChoiceByTopic(games, topic.Name).ConfigureAwait(false);
@@ -125,21 +126,19 @@ namespace english_learning_server.Controllers
 
                 await _optionRepo.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-                return Ok(
-                    new
-                    {
-                        success = true,
-                        message = "Options created successfully"
-                    }
-                );
+                return Ok( new ApiResponse { Message = "Options created successfully" });
             }
             catch (Exception e)
             {
-                return StatusCode(500, e.Message);
+                return InternalServerErrorResponse(e.Message);
             }
         }
 
+        /// <summary>
+        /// Generate options for sentence choice games by topic
+        /// </summary>
         [HttpPost("topics/{topicId:guid}/options/sentenceChoice")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse))]
         public async Task<IActionResult> createOptionsForSentenceChoiceByTopic([FromRoute] Guid topicId, CancellationToken cancellationToken)
         {
             try
@@ -153,7 +152,7 @@ namespace english_learning_server.Controllers
 
                 if (games == null || topic == null)
                 {
-                    return NotFound();
+                    return NotFoundResponse("Games or Topics not found");
                 }
 
                 var baseOptions = await _langChainService.FetchOptionForSentenceChoiceByTopic(games, topic.Name).ConfigureAwait(false);
@@ -162,17 +161,11 @@ namespace english_learning_server.Controllers
 
                 await _optionRepo.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-                return Ok(
-                    new
-                    {
-                        success = true,
-                        message = "Options created successfully"
-                    }
-                );
+                return Ok( new ApiResponse { Message = "Options created successfully" });
             }
             catch (Exception e)
             {
-                return StatusCode(500, e.Message);
+                return InternalServerErrorResponse(e.Message);
             }
         }
     }

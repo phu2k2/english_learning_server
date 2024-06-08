@@ -1,4 +1,8 @@
-using english_learning_server.Dtos.Account;
+using api.Extensions;
+using english_learning_server.Dtos.Account.Commamd;
+using english_learning_server.Dtos.Account.Response;
+using english_learning_server.Dtos.Common;
+using english_learning_server.Failure;
 using english_learning_server.Interfaces;
 using english_learning_server.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -9,8 +13,11 @@ using Microsoft.EntityFrameworkCore;
 namespace english_learning_server.Controllers
 {
     [ApiController]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ApiErrorResponse))]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiErrorResponse))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ApiErrorResponse))]
     [Route("api/users")]
-    public class AccountController : ControllerBase
+    public class AccountController : ApiControllerBase
     {
         private readonly UserManager<User> _userManager;
         private readonly ITokenService _tokenService;
@@ -27,8 +34,12 @@ namespace english_learning_server.Controllers
             _profileRepo = profileRepo;
         }
 
+        /// <summary>
+        /// Login user
+        /// </summary>
         [HttpPost("signIn")]
-        public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(NewUserDto))]
+        public async Task<IActionResult> Login([FromBody] LoginQueryDto loginDto)
         {
             try
             {
@@ -39,13 +50,13 @@ namespace english_learning_server.Controllers
 
                 var user = await _userManager.Users.SingleOrDefaultAsync(x => x.UserName == loginDto.UserName);
 
-                if (user == null) return Unauthorized("Invalid userName");
+                if (user == null) return UnauthorizedResponse("Invalid userName");
 
                 var result = await _signInManager.CheckPasswordSignInAsync(user, loginDto.Password, false);
 
                 if (!result.Succeeded)
                 {
-                    return Unauthorized("User not found or password is incorrect");
+                    return UnauthorizedResponse("User not found or password is incorrect");
                 }
                 else
                 {
@@ -61,12 +72,16 @@ namespace english_learning_server.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(500, new { message = e.Message });
+                return InternalServerErrorResponse(e.Message);
             }
         }
 
+        /// <summary>
+        /// Register user
+        /// </summary>
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(NewUserDto))]
+        public async Task<IActionResult> Register([FromBody] RegisterCommandDto registerDto)
         {
             try
             {
@@ -88,10 +103,11 @@ namespace english_learning_server.Controllers
 
                 var createdUser = await _userManager.CreateAsync(user, registerDto.Password);
 
-                var createdProfile = await _profileRepo.CreateProfileAsync(profile);
 
                 if (createdUser.Succeeded)
                 {
+                    var createdProfile = await _profileRepo.CreateProfileAsync(profile);
+
                     var roleResult = await _userManager.AddToRoleAsync(user, "User");
                     if (roleResult.Succeeded)
                     {
@@ -106,21 +122,25 @@ namespace english_learning_server.Controllers
                     }
                     else
                     {
-                        return StatusCode(500, roleResult.Errors);
+                        return InternalServerErrorResponse(roleResult.Errors);
                     }
                 }
                 else
                 {
-                    return StatusCode(500, createdUser.Errors);
+                    return InternalServerErrorResponse(createdUser.Errors);
                 }
             }
             catch (Exception e)
             {
-                return StatusCode(500, new { message = e.Message });
+                return InternalServerErrorResponse(e.Message);
             }
         }
 
+        /// <summary>
+        /// Sign out user
+        /// </summary>
         [HttpPost("signOut")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse))]
         [Authorize]
         public async Task<IActionResult> LogOut()
         {
@@ -133,22 +153,20 @@ namespace english_learning_server.Controllers
 
             if (user == null)
             {
-                return Unauthorized("No user is currently logged in");
+                return UnauthorizedResponse("No user is currently logged in");
             }
 
             await _signInManager.SignOutAsync();
 
-            return Ok(
-                new
-                {
-                    success = true,
-                    message = "Profile updated successfully",
-                }
-            );
+            return Ok(new ApiResponse { Message = "User logged out successfully" });
         }
 
+        /// <summary>
+        /// Forgot password
+        /// </summary>
         [HttpPost("forgotPassword")]
-        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto forgotPasswordDto)
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ForgotPasswordResponseDto))]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordCommandDto forgotPasswordDto)
         {
             if (!ModelState.IsValid)
             {
@@ -159,7 +177,7 @@ namespace english_learning_server.Controllers
 
             if (user == null)
             {
-                return NotFound("User not found");
+                return NotFoundResponse("User not found");
             }
 
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
@@ -169,17 +187,15 @@ namespace english_learning_server.Controllers
             await _emailService.SendEmailAsync(user.Email, "Reset Password",
                 $"Please reset your password by <a href='{callbackUrl}'>clicking here</a>");
 
-            return Ok(
-                new
-                {
-                    success = true,
-                    message = "Email sent successfully",
-                }
-            );
+            return Ok(new ForgotPasswordResponseDto { Token = token });
         }
 
+        /// <summary>
+        /// Reset password
+        /// </summary>
         [HttpPost("resetPassword")]
-        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto resetPasswordDto)
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse))]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordCommandDto resetPasswordDto)
         {
             if (!ModelState.IsValid)
             {
@@ -190,24 +206,18 @@ namespace english_learning_server.Controllers
 
             if (user == null)
             {
-                return NotFound("User not found");
+                return NotFoundResponse("User not found");
             }
 
             var result = await _userManager.ResetPasswordAsync(user, resetPasswordDto.Token, resetPasswordDto.NewPassword);
 
             if (result.Succeeded)
             {
-                return Ok(
-                    new
-                    {
-                        success = true,
-                        message = "Password reset successfully",
-                    }
-                );
+                return Ok(new ApiResponse { Message = "Password reset successfully" });
             }
             else
             {
-                return StatusCode(500, result.Errors);
+                return InternalServerErrorResponse(result.Errors);
             }
         }
     }

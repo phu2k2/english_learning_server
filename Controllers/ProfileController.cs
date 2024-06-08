@@ -1,17 +1,25 @@
 using api.Extensions;
-using english_learning_server.Dtos.Profile;
+using english_learning_server.Dtos.Common;
+using english_learning_server.Dtos.Profile.Command;
+using english_learning_server.Dtos.Profile.Response;
+using english_learning_server.Dtos.ProfileGame.Command;
+using english_learning_server.Failure;
 using english_learning_server.Interfaces;
 using english_learning_server.Mappers;
 using english_learning_server.Models;
+using Google.Protobuf.WellKnownTypes;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace english_learning_server.Controllers
 {
     [ApiController]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ApiErrorResponse))]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiErrorResponse))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ApiErrorResponse))]
     [Route("api/profiles")]
     [Authorize]
-    public class ProfileController : ControllerBase
+    public class ProfileController : ApiControllerBase
     {
         private readonly IRepository<Profile> _profileRepo;
         private readonly IRepository<ProfileGame> _profileGameRepo;
@@ -24,7 +32,11 @@ namespace english_learning_server.Controllers
             _googleCloudService = googleCloudService;
         }
 
+        /// <summary>
+        /// Get profile
+        /// </summary>
         [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GetProfileResponseDto))]
         public async Task<IActionResult> GetProfile(CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
@@ -32,23 +44,22 @@ namespace english_learning_server.Controllers
 
             var userId = User.GetUsername();
 
-            if (userId == null)
-            {
-                return Unauthorized();
-            }
-
             var profile = await _profileRepo.GetFirstOrDefaultAsync(x => x.UserId == userId, cancellationToken).ConfigureAwait(false);
 
             if (profile == null)
             {
-                return NotFound();
+                return NotFoundResponse("Profile is not found");
             }
 
-            return Ok(profile.ToProfileDto());
+            return Ok(profile.ToProfileResponseDto());
         }
 
+        /// <summary>
+        /// Update profile
+        /// </summary>
         [HttpPut("{profileId:guid}")]
-        public async Task<IActionResult> UpdateProfile([FromRoute] Guid profileId, [FromBody] UpdateProfileDto updateDto, CancellationToken cancellationToken)
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse))]
+        public async Task<IActionResult> UpdateProfile([FromRoute] Guid profileId, [FromBody] UpdateProfileCommandDto updateDto, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -57,7 +68,7 @@ namespace english_learning_server.Controllers
 
             if (existingProfile is null)
             {
-                return NotFound();
+                return NotFoundResponse("Profile is not found");
             }
 
             existingProfile.Sex = updateDto.Sex;
@@ -68,17 +79,15 @@ namespace english_learning_server.Controllers
 
             await _profileRepo.SaveChangesAsync().ConfigureAwait(false);
 
-            return Ok(
-                new
-                {
-                    success = true,
-                    message = "Profile updated successfully",
-                }
-            );
+            return Ok(new ApiResponse { Message = "Update profile successfully!" });
         }
 
+        /// <summary>
+        /// Update play status of game
+        /// </summary>
         [HttpPatch("{profileId:guid}/games/{gameId:guid}/play")]
-        public async Task<IActionResult> UpdateIsPlayOfGame([FromRoute] Guid profileId, [FromRoute] Guid gameId, [FromBody] UpdateProfileGameDto updateDto, CancellationToken cancellationToken)
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse))]
+        public async Task<IActionResult> UpdatePlayStatusOfGame([FromRoute] Guid profileId, [FromRoute] Guid gameId, [FromBody] UpdateProfileGameCommandDto updateDto, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -87,7 +96,7 @@ namespace english_learning_server.Controllers
 
             if (profileGame is null)
             {
-                return NotFound();
+                return NotFoundResponse("Profile or Game is not found");
             }
 
             profileGame.IsPlayed = updateDto.IsPlayed;
@@ -96,41 +105,32 @@ namespace english_learning_server.Controllers
 
             await _profileGameRepo.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-            return Ok(
-                new
-                {
-                    success = true,
-                    message = "Update game status successfully!"
-                }
-            );
+            return Ok(new ApiResponse { Message = "Update play status of game successfully!" });
         }
 
-        [HttpPost("{profileId:guid}/avatar/upload")]
-        public async Task<IActionResult> UploadImageOfUser(IFormFile imageFile, [FromRoute] Guid profileId)
+        /// <summary>
+        /// Upload avatar
+        /// </summary>
+        [HttpPost("{profileId:guid}/uploadAvatar")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadImageResponseDto))]
+        public async Task<IActionResult> UploadImageOfUser([FromForm] UpdateImageCommandDto file, [FromRoute] Guid profileId)
         {
-            if (imageFile == null || imageFile.Length == 0)
+            if (file.ImageFile.Length == 0)
             {
-                return BadRequest("No file uploaded");
+                return BadRequestResponse("No file uploaded");
             }
 
-            var fileExtension = Path.GetExtension(imageFile.FileName);
-            var fileName = $"image__{profileId}{fileExtension}";
+            var fileExtension = Path.GetExtension(file.ImageFile.FileName);
+            var fileName = $"avatar__{profileId}{fileExtension}";
 
             using var memoryStream = new MemoryStream();
-            await imageFile.CopyToAsync(memoryStream);
+            await file.ImageFile.CopyToAsync(memoryStream);
 
-            var mediaLink = await _googleCloudService.UploadFileToBucket(fileName, memoryStream,"image/jpeg");
+            var mediaLink = await _googleCloudService.UploadFileToBucket(fileName, memoryStream, "image/jpeg");
 
             var imageUrls = _googleCloudService.GetPublicAndAuthenticatedUrl(fileName);
 
-            return Ok(
-                new
-                {
-                    success = true,
-                    authenticatedUrl = imageUrls.AuthenticatedUrl,
-                    publicUrl = imageUrls.PublicUrl
-                }
-            );
+            return Ok(new UploadImageResponseDto { AuthenticatedUrl = imageUrls.AuthenticatedUrl, PublicUrl = imageUrls.PublicUrl });
         }
     }
 }
