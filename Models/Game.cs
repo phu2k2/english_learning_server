@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Google.Api.Gax;
 using Microsoft.EntityFrameworkCore;
 
 namespace english_learning_server.Models;
@@ -29,7 +26,7 @@ public partial class Game
     public Guid TopicId { get; set; }
 
     [InverseProperty("Game")]
-    public virtual ICollection<Option> Options { get; set; } = new List<Option>();
+    public virtual ICollection<Option> Options { get; set; } = new HashSet<Option>();
 
     [InverseProperty("Game")]
     public virtual ICollection<ProfileGame> ProfileGames { get; set; } = new List<ProfileGame>();

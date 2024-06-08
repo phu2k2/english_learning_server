@@ -1,22 +1,23 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using english_learning_server.Dtos.Topic;
+using english_learning_server.Dtos.Topic.Response;
 using english_learning_server.Models;
 
 namespace english_learning_server.Mappers
 {
     public static class TopicMappers
     {
-        public static TopicDto ToTopicDto(this Topic topicModel)
+        public static GetTopicsResponseDto ToTopicsResponseDto(this IEnumerable<Topic> topicModels, Guid profileId)
         {
-            return new TopicDto
+            return new GetTopicsResponseDto
             {
-                Id = topicModel.Id,
-                Name = topicModel.Name,
-                Image = topicModel.Image,
-                NumberOfGame = topicModel.NumberOfGame
+                Topics = topicModels.Select(s => new TopicDto
+                {
+                    Id = s.Id,
+                    Name = s.Name,
+                    Image = s.Image,
+                    NumberOfGame = s.NumberOfGame,
+                    NumberOfPlayedGames = s.Games.Count(g => g.ProfileGames.Any(pg => pg.IsPlayed != null && pg.ProfileId == profileId && pg.IsPlayed.Value)),
+                })
             };
         }
     }

@@ -1,37 +1,32 @@
-using english_learning_server.Dtos.Game;
 using english_learning_server.Dtos.Option;
+using english_learning_server.Dtos.ProfileGame.Response;
 using english_learning_server.Models;
 
 namespace english_learning_server.Mappers
 {
     public static class GameMappers
     {
-        public static GameDto ToGameDto(this Game gameModel, Guid topicId)
+        public static GetProfileGamesResponseDto ToProfileGamesResponseDto(this IEnumerable<ProfileGame> profileGamesModel, Guid topicId)
         {
-            return new GameDto
+            return new GetProfileGamesResponseDto
             {
-                Id = gameModel.Id,
-                Kind = gameModel.Kind,
-                Question = gameModel.Question,
-                RightAnswer = gameModel.RightAnswer,
-                SoundFilePath = gameModel.SoundFilePath,
-                TopicId = topicId,
-
-                options = gameModel.Options.Select(o => new OptionDto
+                Games = profileGamesModel.Select(g => new ProfileGameDto
                 {
-                    Id = o.Id,
-                    GameId = gameModel.Id,
-                    Name = o.Name
-                }).ToList()
-            };
-        }
-
-        public static GameTopicDto ToGameTopicDto(this Game gameModel, Guid topicId)
-        {
-            return new GameTopicDto
-            {
-                GameId = gameModel.Id,
-                TopicId = topicId
+                    Id = g.Game.Id,
+                    Kind = g.Game.Kind,
+                    Question = g.Game.Question,
+                    RightAnswer = g.Game.RightAnswer,
+                    SoundFilePath = g.Game.SoundFilePath,
+                    TopicId = topicId,
+                    IsPlayed = g.IsPlayed,
+                    options = g.Game.Options.Select(o => new OptionDto
+                    {
+                        Id = o.Id,
+                        GameId = o.GameId,
+                        Name = o.Name,
+                        PhotoFilePath = o.PhotoFilePath
+                    }).ToList()
+                })
             };
         }
     }

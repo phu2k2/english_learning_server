@@ -64,6 +64,6 @@ namespace english_learning_server.Service
                 AuthenticatedUrl = url,
                 PublicUrl = $"https://storage.googleapis.com/{_bucketName}/{fileName}"
             };
-        }        
+        }
     }
 }
