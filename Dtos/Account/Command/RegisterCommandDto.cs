@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace english_learning_server.Dtos.Account
+namespace english_learning_server.Dtos.Account.Commamd
 {
-    public class RegisterDto
+    public class RegisterCommandDto
     {
         [Required]
         public string? UserName { get; set; }

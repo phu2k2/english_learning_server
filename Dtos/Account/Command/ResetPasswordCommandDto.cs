@@ -1,12 +1,8 @@
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Threading.Tasks;
 
-namespace english_learning_server.Dtos.Account
+namespace english_learning_server.Dtos.Account.Commamd
 {
-    public class ResetPasswordDto
+    public class ResetPasswordCommandDto
     {
         [Required]
         public string Email { get; set; } = null!;

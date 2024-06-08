@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace english_learning_server.Dtos.Account
+namespace english_learning_server.Dtos.Account.Commamd
 {
-    public class LoginDto
+    public class LoginQueryDto
     {
         [Required]
         public string UserName { get; set; } = null!;
@@ -10,3 +10,4 @@ namespace english_learning_server.Dtos.Account
         public string Password { get; set; } = null!;
     }
 }
+

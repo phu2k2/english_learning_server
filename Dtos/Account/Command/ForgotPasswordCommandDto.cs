@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace english_learning_server.Dtos.Account
+namespace english_learning_server.Dtos.Account.Commamd
 {
-    public class ForgotPasswordDto
+    public class ForgotPasswordCommandDto
     {
         [Required]
         public string Email { get; set; } = null!;
