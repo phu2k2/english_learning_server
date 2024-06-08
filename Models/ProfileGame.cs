@@ -16,7 +16,7 @@ public partial class ProfileGame
 
     public Guid GameId { get; set; }
 
-    public bool? IsPlayed { get; set; }
+    public bool IsPlayed { get; set; }
 
     [ForeignKey("GameId")]
     [InverseProperty("ProfileGames")]
@@ -25,4 +25,11 @@ public partial class ProfileGame
     [ForeignKey("ProfileId")]
     [InverseProperty("ProfileGames")]
     public virtual Profile Profile { get; set; } = null!;
+
+    public ProfileGame(Guid profileId, Guid gameId, bool isPlayed)
+    {
+        ProfileId = profileId;
+        GameId = gameId;
+        IsPlayed = isPlayed;
+    }
 }

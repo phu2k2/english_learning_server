@@ -79,18 +79,14 @@ namespace english_learning_server.Controllers
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
 
-                var profileGames = await _profileGameRepo
-                                        .GetBy(pg => pg.ProfileId == profileGamesResponseDto.ProfileId && pg.Game.TopicId == profileGamesResponseDto.TopicId)
-                                        .Include(pg => pg.Game)
-                                        .ThenInclude(g => g.Options)
-                                        .ToListAsync();
+                var games = await _gameRepo.GetBy(g => g.TopicId == profileGamesResponseDto.TopicId).Include(g => g.ProfileGames).Include(g => g.Options).ToListAsync();
 
-                if (profileGames is null)
+                if (games is null)
                 {
                     return NotFoundResponse("Games not found");
                 }
 
-                var gamesDto = profileGames.ToProfileGamesResponseDto(profileGamesResponseDto.TopicId);
+                var gamesDto = games.ToProfileGamesResponseDto(profileGamesResponseDto);
 
                 return Ok(gamesDto);
             }
