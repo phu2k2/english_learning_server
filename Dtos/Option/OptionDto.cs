@@ -6,6 +6,7 @@ namespace english_learning_server.Dtos.Option
     {
         public Guid Id { get; set; }
         public Guid GameId {get; set;}
-        public string Name { get; set; }
+        public string Name { get; set; } = null!;
+        public string? PhotoFilePath { get; set; }
     }
 }

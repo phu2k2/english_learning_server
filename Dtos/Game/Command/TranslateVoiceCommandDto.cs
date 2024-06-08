@@ -1,9 +1,8 @@
 using System.ComponentModel.DataAnnotations;
-using english_learning_server.Dtos.Option;
 
-namespace english_learning_server.Dtos.Game
+namespace english_learning_server.Dtos.Game.Command
 {
-    public class TranslateVoiceDto
+    public class TranslateVoiceCommandDto
     {
         [Required]
         public string WavFileGcsUri { get; set; } = null!;
