@@ -13,7 +13,6 @@ namespace english_learning_server.Dtos.Game.Response
         public string? Kind { get; set; }
         public string? Question { get; set; }
         public string? RightAnswer { get; set; }
-        public string? SoundFilePath { get; set; }
         public Guid TopicId { get; set; }
         public List<OptionDto> options { get; set; } = new List<OptionDto>();
     }

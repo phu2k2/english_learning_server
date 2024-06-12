@@ -20,9 +20,6 @@ public partial class Game
     [StringLength(255)]
     public string? RightAnswer { get; set; }
 
-    [StringLength(255)]
-    public string? SoundFilePath { get; set; }
-
     public Guid TopicId { get; set; }
 
     [InverseProperty("Game")]

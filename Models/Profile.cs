@@ -19,7 +19,9 @@ public partial class Profile
 
     public bool? Status { get; set; }
 
-    public string UserId { get; set; }
+    public string? AvatarFilePath { get; set; }
+
+    public string UserId { get; set; } = null!;
 
     [InverseProperty("Follower")]
     public virtual ICollection<Follow> FollowFollowers { get; set; } = new List<Follow>();

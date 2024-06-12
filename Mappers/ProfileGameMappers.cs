@@ -17,14 +17,14 @@ namespace english_learning_server.Mappers
                     Kind = g.Kind,
                     Question = g.Question,
                     RightAnswer = g.RightAnswer,    
-                    SoundFilePath = g.SoundFilePath,
                     TopicId = g.TopicId,
                     IsPlayed = g.ProfileGames.FirstOrDefault(pg => pg.ProfileId == profileGamesQueryDto.ProfileId)?.IsPlayed,
                     options = g.Options.Select(o => new OptionDto
                     {
                         Id = o.Id,
                         GameId = o.GameId,
-                        Name = o.Name
+                        Name = o.Name,
+                        PhotoFilePath = o.PhotoFilePath
                     }).ToList()
                 })
             };

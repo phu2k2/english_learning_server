@@ -1,6 +1,8 @@
 using english_learning_server.Interfaces;
 using Google.Cloud.Speech.V1;
 using Google.Cloud.Storage.V1;
+using Google.Cloud.TextToSpeech.V1;
+using Microsoft.AspNetCore.Mvc;
 
 namespace english_learning_server.Service
 {
@@ -8,6 +10,7 @@ namespace english_learning_server.Service
     {
         private readonly SpeechClient _speechClient;
         private readonly StorageClient _storageClient;
+        private readonly TextToSpeechClient _textToSpeechClient;
         private readonly string? _bucketName;
         private readonly IConfiguration _config;
 
@@ -16,6 +19,7 @@ namespace english_learning_server.Service
             _config = config;
             _speechClient = SpeechClient.Create();
             _storageClient = StorageClient.Create();
+            _textToSpeechClient = TextToSpeechClient.Create();
             _bucketName = _config["GoogleCloud:BucketName"];
         }
 
@@ -26,6 +30,7 @@ namespace english_learning_server.Service
                 Encoding = RecognitionConfig.Types.AudioEncoding.Linear16,
                 LanguageCode = "en-US",
                 ProfanityFilter = false,
+                SampleRateHertz = 16000
             }, RecognitionAudio.FromStorageUri(wavFileGcsUri));
 
             string transcribedText = "";
@@ -64,6 +69,29 @@ namespace english_learning_server.Service
                 AuthenticatedUrl = url,
                 PublicUrl = $"https://storage.googleapis.com/{_bucketName}/{fileName}"
             };
+        }
+
+        public async Task<byte[]> SynthesizeSpeech(string text)
+        {
+            var input = new SynthesisInput
+            {
+                Text = text
+            };
+
+            var voiceSelection = new VoiceSelectionParams
+            {
+                LanguageCode = "en-US",
+                Name = "en-US-Standard-F",
+            };
+
+            var audioConfig = new AudioConfig
+            {
+                AudioEncoding = AudioEncoding.Mp3
+            };
+
+            var response = await _textToSpeechClient.SynthesizeSpeechAsync(input, voiceSelection, audioConfig);
+
+            return response.AudioContent.ToByteArray();
         }
     }
 }

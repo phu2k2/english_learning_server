@@ -13,6 +13,7 @@ namespace english_learning_server.Mappers
                 Sex = profileModel.Sex,
                 Birthday = profileModel.Birthday,
                 Status = profileModel.Status,
+                AvatarFilePath = profileModel.AvatarFilePath
             };
         }
     }

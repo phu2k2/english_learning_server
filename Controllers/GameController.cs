@@ -95,5 +95,14 @@ namespace english_learning_server.Controllers
                 return InternalServerErrorResponse(e.Message);
             }
         }
+
+        [HttpPost("synthesizeSpeech")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(File))]
+        public async Task<IActionResult> SynthesizeSpeech([FromQuery] SynthesizeSpeechCommandDto synthesizeSpeechQueryDto)
+        {
+            var response = await _googleCloudService.SynthesizeSpeech(synthesizeSpeechQueryDto.Text);
+
+            return Ok(File(response, "audio/mpeg"));
+        }
     }
 }
