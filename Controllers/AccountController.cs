@@ -2,6 +2,7 @@ using api.Extensions;
 using english_learning_server.Dtos.Account.Commamd;
 using english_learning_server.Dtos.Account.Response;
 using english_learning_server.Dtos.Common;
+using english_learning_server.Dtos.Profile.Command;
 using english_learning_server.Failure;
 using english_learning_server.Interfaces;
 using english_learning_server.Models;
@@ -195,10 +196,32 @@ namespace english_learning_server.Controllers
             var htmlMessage = System.IO.File.ReadAllText("email.html");
 
             htmlMessage = htmlMessage.Replace("{{ otp }}", otp);
+            htmlMessage = htmlMessage.Replace("{{ createdAt }}", DateTime.Now.ToString("dd MMM, yyyy"));
+            htmlMessage = htmlMessage.Replace("{{ userName }}", user.UserName);
 
             await _emailService.SendEmailAsync(user.Email!, "Reset Password", htmlMessage);
 
             return Ok(new ApiResponse { Message = "OTP has been sent to your email successfully" });
+        }
+
+        /// <summary>
+        /// Verify OTP
+        /// </summary>
+        [HttpPost("verifyOtp")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse))]
+        public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpCommandDto verifyOtpDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (!_otpStore.TryGetValue(verifyOtpDto.Email, out var otp) || otp != verifyOtpDto.Otp)
+            {
+                return UnauthorizedResponse("Invalid OTP");
+            }
+
+            return Ok(new ApiResponse { Message = "OTP verified successfully" });
         }
 
         /// <summary>
@@ -218,11 +241,6 @@ namespace english_learning_server.Controllers
             if (user == null)
             {
                 return NotFoundResponse("User not found");
-            }
-
-            if (!_otpStore.TryGetValue(user.Email!, out var otp) || otp != resetPasswordDto.Otp)
-            {
-                return UnauthorizedResponse("Invalid OTP");
             }
 
             var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);

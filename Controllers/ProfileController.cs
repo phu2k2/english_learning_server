@@ -151,7 +151,7 @@ namespace english_learning_server.Controllers
             var response = sevenDays.Select(async day => new GetProfileStatisticsByDayResponseItem
             {
                 Day = day,
-                NumberOfGames =  await _profileGameRepo.CountAsync(x => x.ProfileId == profileId && (x.CreatedAt.Date == day.Date || x.UpdatedAt.Date == day.Date)).ConfigureAwait(false)
+                NumberOfGames =  await _profileGameRepo.CountAsync(x => x.ProfileId == profileId && x.IsPlayed == true && (x.CreatedAt.Date == day.Date || x.UpdatedAt.Date == day.Date)).ConfigureAwait(false)
             });
 
             return Ok(new GetProfileStatisticsByDayResponseDto
@@ -179,7 +179,7 @@ namespace english_learning_server.Controllers
             {
                 Month = month,
                 NumberOfGames = await _profileGameRepo
-                            .CountAsync(x => x.ProfileId == profileId && (x.CreatedAt.Month == month || x.UpdatedAt.Month == month) && x.CreatedAt.Year == currentDate.Year)
+                            .CountAsync(x => x.ProfileId == profileId && x.IsPlayed == true && (x.CreatedAt.Month == month || x.UpdatedAt.Month == month) && x.CreatedAt.Year == currentDate.Year)
                             .ConfigureAwait(false)
             });
 
