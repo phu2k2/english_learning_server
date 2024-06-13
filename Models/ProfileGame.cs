@@ -18,6 +18,10 @@ public partial class ProfileGame
 
     public bool IsPlayed { get; set; }
 
+    public DateTime CreatedAt { get; set; } 
+
+    public DateTime UpdatedAt { get; set; } 
+
     [ForeignKey("GameId")]
     [InverseProperty("ProfileGames")]
     public virtual Game Game { get; set; } = null!;

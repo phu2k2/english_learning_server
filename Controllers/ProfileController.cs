@@ -73,10 +73,11 @@ namespace english_learning_server.Controllers
             existingProfile.Sex = updateDto.Sex;
             existingProfile.Birthday = updateDto.Birthday;
             existingProfile.Status = updateDto.Status;
+            existingProfile.AvatarFilePath = updateDto.AvatarFilePath;
 
             _profileRepo.Update(existingProfile);
 
-            await _profileRepo.SaveChangesAsync().ConfigureAwait(false);
+            await _profileRepo.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
             return Ok(new ApiResponse { Message = "Update profile successfully!" });
         }
@@ -130,6 +131,62 @@ namespace english_learning_server.Controllers
             var imageUrls = _googleCloudService.GetPublicAndAuthenticatedUrl(fileName);
 
             return Ok(new UploadImageResponseDto { AuthenticatedUrl = imageUrls.AuthenticatedUrl, PublicUrl = imageUrls.PublicUrl });
+        }
+
+        /// <summary>
+        /// Get statistics of profile by day
+        /// </summary>
+        [HttpGet("{profileId:guid}/statistics/day")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GetProfileStatisticsByDayResponseDto))]
+        public async Task<IActionResult> GetProfileStatisticsByDay([FromRoute] Guid profileId)
+        {
+            var currentDate = DateTime.UtcNow.Date;
+            List<DateTime> sevenDays = new List<DateTime>();
+
+            for (int i = 0; i < 7; i++)
+            {
+                sevenDays.Add(currentDate.AddDays(-i));
+            }
+
+            var response = sevenDays.Select(async day => new GetProfileStatisticsByDayResponseItem
+            {
+                Day = day,
+                NumberOfGames =  await _profileGameRepo.CountAsync(x => x.ProfileId == profileId && (x.CreatedAt.Date == day.Date || x.UpdatedAt.Date == day.Date)).ConfigureAwait(false)
+            });
+
+            return Ok(new GetProfileStatisticsByDayResponseDto
+            {
+                days = response.Select(x => x.Result)
+            });
+        }
+
+        /// <summary>
+        /// Get statistics of profile by month
+        /// </summary>
+        [HttpGet("{profileId:guid}/statistics/month")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GetProfileStatisticsByMonthResponseDto))]
+        public async Task<IActionResult> GetProfileStatisticsByMonth([FromRoute] Guid profileId)
+        {
+            var currentDate = DateTime.UtcNow.Date;
+            List<int> sevenMonths = new List<int>();
+
+            for (int i = 0; i < 7; i++)
+            {
+                sevenMonths.Add(currentDate.AddMonths(-i).Month);
+            }
+
+            var response = sevenMonths.Select(async month => new GetProfileStatisticsByMonthResponseItem
+            {
+                Month = month,
+                NumberOfGames = await _profileGameRepo
+                            .CountAsync(x => x.ProfileId == profileId && (x.CreatedAt.Month == month || x.UpdatedAt.Month == month) && x.CreatedAt.Year == currentDate.Year)
+                            .ConfigureAwait(false)
+            });
+
+            return Ok(new GetProfileStatisticsByMonthResponseDto
+            {
+                months = response.Select(x => x.Result)
+            });
         }
     }
 }

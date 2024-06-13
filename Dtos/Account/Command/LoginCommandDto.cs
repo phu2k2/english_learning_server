@@ -4,10 +4,9 @@ namespace english_learning_server.Dtos.Account.Commamd
 {
     public class LoginQueryDto
     {
-        [Required]
-        public string UserName { get; set; } = null!;
+        public string? UserName { get; set; }
+        public string? Email { get; set; }
         [Required]
         public string Password { get; set; } = null!;
     }
 }
-
