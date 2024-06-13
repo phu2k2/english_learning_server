@@ -24,6 +24,7 @@ namespace english_learning_server.Controllers
         private readonly IEmailService _emailService;
         private readonly SignInManager<User> _signInManager;
         private readonly IProfileRepository _profileRepo;
+        private static readonly Dictionary<string, string> _otpStore = new Dictionary<string, string>();
 
         public AccountController(UserManager<User> userManager, ITokenService tokenService, IEmailService emailService, SignInManager<User> signInManager, IProfileRepository profileRepo)
         {
@@ -48,7 +49,14 @@ namespace english_learning_server.Controllers
                     return BadRequest(ModelState);
                 }
 
-                var user = await _userManager.Users.SingleOrDefaultAsync(x => x.UserName == loginDto.UserName);
+                if (loginDto.UserName == null && loginDto.Email == null)
+                {
+                    return BadRequestResponse("Username or Email is required");
+                }
+
+                var user = loginDto.Email != null
+                            ? await _userManager.Users.SingleOrDefaultAsync(x => x.Email == loginDto.Email)
+                            : await _userManager.Users.SingleOrDefaultAsync(x => x.UserName == loginDto.UserName);
 
                 if (user == null) return UnauthorizedResponse("Invalid userName");
 
@@ -63,8 +71,8 @@ namespace english_learning_server.Controllers
                     return Ok(
                         new NewUserDto
                         {
-                            UserName = user.UserName,
-                            Email = user.Email,
+                            UserName = user.UserName!,
+                            Email = user.Email!,
                             Token = _tokenService.CreateToken(user)
                         }
                     );
@@ -114,8 +122,8 @@ namespace english_learning_server.Controllers
                         return Ok(
                             new NewUserDto
                             {
-                                UserName = user.UserName,
-                                Email = user.Email,
+                                UserName = user.UserName!,
+                                Email = user.Email!,
                                 Token = _tokenService.CreateToken(user)
                             }
                         );
@@ -165,7 +173,7 @@ namespace english_learning_server.Controllers
         /// Forgot password
         /// </summary>
         [HttpPost("forgotPassword")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ForgotPasswordResponseDto))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse))]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordCommandDto forgotPasswordDto)
         {
             if (!ModelState.IsValid)
@@ -180,14 +188,17 @@ namespace english_learning_server.Controllers
                 return NotFoundResponse("User not found");
             }
 
-            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var otp = _emailService.GenerateOTP();
 
-            var callbackUrl = Url.Action("ResetPassword", "Account", new { token, email = user.Email }, Request.Scheme);
+            _otpStore[user.Email!] = otp;
 
-            await _emailService.SendEmailAsync(user.Email, "Reset Password",
-                $"Please reset your password by <a href='{callbackUrl}'>clicking here</a>");
+            var htmlMessage = System.IO.File.ReadAllText("email.html");
 
-            return Ok(new ForgotPasswordResponseDto { Token = token });
+            htmlMessage = htmlMessage.Replace("{{ otp }}", otp);
+
+            await _emailService.SendEmailAsync(user.Email!, "Reset Password", htmlMessage);
+
+            return Ok(new ApiResponse { Message = "OTP has been sent to your email successfully" });
         }
 
         /// <summary>
@@ -209,7 +220,13 @@ namespace english_learning_server.Controllers
                 return NotFoundResponse("User not found");
             }
 
-            var result = await _userManager.ResetPasswordAsync(user, resetPasswordDto.Token, resetPasswordDto.NewPassword);
+            if (!_otpStore.TryGetValue(user.Email!, out var otp) || otp != resetPasswordDto.Otp)
+            {
+                return UnauthorizedResponse("Invalid OTP");
+            }
+
+            var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var result = await _userManager.ResetPasswordAsync(user, resetToken, resetPasswordDto.NewPassword);
 
             if (result.Succeeded)
             {
