@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,6 +18,8 @@ public partial class Option
 
     [StringLength(255)]
     public string? PhotoFilePath { get; set; }
+
+    public int? BlankPosition { get; set; }
 
     [ForeignKey("GameId")]
     [InverseProperty("Options")]

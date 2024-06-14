@@ -2,7 +2,6 @@ using english_learning_server.Interfaces;
 using Google.Cloud.Speech.V1;
 using Google.Cloud.Storage.V1;
 using Google.Cloud.TextToSpeech.V1;
-using Microsoft.AspNetCore.Mvc;
 
 namespace english_learning_server.Service
 {
@@ -92,6 +91,22 @@ namespace english_learning_server.Service
             var response = await _textToSpeechClient.SynthesizeSpeechAsync(input, voiceSelection, audioConfig);
 
             return response.AudioContent.ToByteArray();
+        }
+
+        public async Task<string> EmailHtmlMessage(string otp, string createdAt, string userName)
+        {
+            using var memoryStream = new MemoryStream();
+            await _storageClient.DownloadObjectAsync(_bucketName, "StaticContent/email.html", memoryStream);
+            memoryStream.Position = 0;
+
+            using var streamReader = new StreamReader(memoryStream);
+            var htmlMessage = await streamReader.ReadToEndAsync();
+
+            htmlMessage = htmlMessage.Replace("{{ otp }}", otp);
+            htmlMessage = htmlMessage.Replace("{{ createdAt }}", createdAt);
+            htmlMessage = htmlMessage.Replace("{{ userName }}", userName);
+
+            return htmlMessage;
         }
     }
 }

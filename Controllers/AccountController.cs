@@ -25,15 +25,17 @@ namespace english_learning_server.Controllers
         private readonly IEmailService _emailService;
         private readonly SignInManager<User> _signInManager;
         private readonly IProfileRepository _profileRepo;
+        private readonly IGoogleCloudService _googleCloudService;
         private static readonly Dictionary<string, string> _otpStore = new Dictionary<string, string>();
 
-        public AccountController(UserManager<User> userManager, ITokenService tokenService, IEmailService emailService, SignInManager<User> signInManager, IProfileRepository profileRepo)
+        public AccountController(UserManager<User> userManager, ITokenService tokenService, IEmailService emailService, SignInManager<User> signInManager, IProfileRepository profileRepo, IGoogleCloudService googleCloudService)
         {
             _userManager = userManager;
             _tokenService = tokenService;
             _emailService = emailService;
             _signInManager = signInManager;
             _profileRepo = profileRepo;
+            _googleCloudService = googleCloudService;
         }
 
         /// <summary>
@@ -177,31 +179,34 @@ namespace english_learning_server.Controllers
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse))]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordCommandDto forgotPasswordDto)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest(ModelState);
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                var user = await _userManager.FindByEmailAsync(forgotPasswordDto.Email);
+
+                if (user == null)
+                {
+                    return NotFoundResponse("User not found");
+                }
+
+                var otp = _emailService.GenerateOTP();
+
+                _otpStore[user.Email!] = otp;
+
+                var htmlMessage = await _googleCloudService.EmailHtmlMessage(otp, DateTime.Now.ToString("dd MMM, yyyy"), user.UserName!);
+
+                await _emailService.SendEmailAsync(user.Email!, "Reset Password", htmlMessage);
+
+                return Ok(new ApiResponse { Message = "OTP has been sent to your email successfully" });
             }
-
-            var user = await _userManager.FindByEmailAsync(forgotPasswordDto.Email);
-
-            if (user == null)
+            catch (Exception e)
             {
-                return NotFoundResponse("User not found");
+                return InternalServerErrorResponse(e.Message);
             }
-
-            var otp = _emailService.GenerateOTP();
-
-            _otpStore[user.Email!] = otp;
-
-            var htmlMessage = System.IO.File.ReadAllText("email.html");
-
-            htmlMessage = htmlMessage.Replace("{{ otp }}", otp);
-            htmlMessage = htmlMessage.Replace("{{ createdAt }}", DateTime.Now.ToString("dd MMM, yyyy"));
-            htmlMessage = htmlMessage.Replace("{{ userName }}", user.UserName);
-
-            await _emailService.SendEmailAsync(user.Email!, "Reset Password", htmlMessage);
-
-            return Ok(new ApiResponse { Message = "OTP has been sent to your email successfully" });
         }
 
         /// <summary>

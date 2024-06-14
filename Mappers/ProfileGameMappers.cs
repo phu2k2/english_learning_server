@@ -24,7 +24,8 @@ namespace english_learning_server.Mappers
                         Id = o.Id,
                         GameId = o.GameId,
                         Name = o.Name,
-                        PhotoFilePath = o.PhotoFilePath
+                        PhotoFilePath = o.PhotoFilePath,
+                        BlankPosition = o.BlankPosition
                     }).ToList()
                 })
             };

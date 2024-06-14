@@ -11,7 +11,7 @@ public partial class Game
     [Key]
     public Guid Id { get; set; }
 
-    [Column(TypeName = "enum('Picture Choice','Sentence Scramble','Sentence Choice','Echo Repeat')")]
+    [Column(TypeName = "enum('Picture Choice','Sentence Scramble','Sentence Choice','Echo Repeat','Fill Blank', 'Foreign Sentence Scramble')")]
     public string? Kind { get; set; }
 
     [Column(TypeName = "text")]

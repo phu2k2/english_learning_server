@@ -17,5 +17,7 @@ namespace english_learning_server.Interfaces
         public AvatarUrl GetPublicAndAuthenticatedUrl(string fileName);
 
         public Task<byte[]> SynthesizeSpeech(string text);
+        
+        public Task<string> EmailHtmlMessage(string otp, string createdAt, string userName);
     }
 }
