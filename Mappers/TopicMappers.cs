@@ -15,7 +15,7 @@ namespace english_learning_server.Mappers
                     Id = s.Id,
                     Name = s.Name,
                     Image = s.Image,
-                    NumberOfGame = s.NumberOfGame,
+                    NumberOfGame = s.Games.Count,
                     NumberOfPlayedGames = s.Games.Count(g => g.ProfileGames.Any(pg => pg.ProfileId == profileId && pg.IsPlayed)),
                 })
             };
