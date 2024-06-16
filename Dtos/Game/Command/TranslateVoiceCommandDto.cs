@@ -6,5 +6,7 @@ namespace english_learning_server.Dtos.Game.Command
     {
         [Required]
         public string WavFileGcsUri { get; set; } = null!;
+        [Required]
+        public string RightAnswer { get; set; } = null!;
     }
 }

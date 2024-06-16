@@ -2,7 +2,6 @@ using api.Extensions;
 using english_learning_server.Dtos.Common;
 using english_learning_server.Failure;
 using english_learning_server.Interfaces;
-using english_learning_server.Mappers;
 using english_learning_server.Models;
 using Microsoft.AspNetCore.Mvc;
 

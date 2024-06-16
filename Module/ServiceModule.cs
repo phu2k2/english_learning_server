@@ -27,6 +27,11 @@ namespace Grwm.Module
             .RegisterType<GoogleCloudService>()
             .As<IGoogleCloudService>()
             .SingleInstance();
+
+            builder
+            .RegisterType<LevenshteinDistanceService>()
+            .As<ILevenshteinDistanceService>()
+            .SingleInstance();
         }
     }
 }

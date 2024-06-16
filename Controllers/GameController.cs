@@ -22,14 +22,14 @@ namespace english_learning_server.Controllers
     public class GameController : ApiControllerBase
     {
         private readonly IRepository<Game> _gameRepo;
-        private readonly IRepository<ProfileGame> _profileGameRepo;
+        private readonly ILevenshteinDistanceService _levenshteinDistanceService;
         private readonly IGoogleCloudService _googleCloudService;
 
-        public GameController(IGoogleCloudService googleCloudService, IRepository<Game> gameRepo, IRepository<ProfileGame> profileGameRepo)
+        public GameController(IGoogleCloudService googleCloudService,ILevenshteinDistanceService levenshteinDistanceService, IRepository<Game> gameRepo)
         {
             _googleCloudService = googleCloudService;
+            _levenshteinDistanceService = levenshteinDistanceService;
             _gameRepo = gameRepo;
-            _profileGameRepo = profileGameRepo;
         }
 
         /// <summary>
@@ -56,15 +56,24 @@ namespace english_learning_server.Controllers
         }
 
         /// <summary>
-        /// Translate voice of user to text for game
+        /// Evaluate the similarity of voice of user for game
         /// </summary>
-        [HttpPost("voice/translateToText")]
+        [HttpPost("voice/similarity")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TranslateVoiceResponseDto))]
         public async Task<IActionResult> TranslateVoiceOfUser([FromBody] TranslateVoiceCommandDto translateVoiceDto)
         {
-            string transcribedText = await _googleCloudService.TransSpeechToText(translateVoiceDto.WavFileGcsUri);
+            var transcribedText = await _googleCloudService.TransSpeechToText(translateVoiceDto.WavFileGcsUri);
 
-            return Ok(new TranslateVoiceResponseDto { Text = transcribedText });
+            if (transcribedText == null)
+            {
+                return BadRequestResponse("Error in transcribing voice");
+            }   
+
+            var normalizedLevenshteinDistance = _levenshteinDistanceService.CalculateNormalizedLevenshteinDistance(transcribedText, translateVoiceDto.RightAnswer);
+
+            bool similarity = normalizedLevenshteinDistance >= 0.8;
+
+            return Ok(new TranslateVoiceResponseDto { Text = transcribedText, Similarity = similarity});
         }
 
         /// <summary>
@@ -96,6 +105,10 @@ namespace english_learning_server.Controllers
             }
         }
 
+
+        /// <summary>
+        /// Get list of games by topic and profile
+        /// </summary>
         [HttpPost("synthesizeSpeech")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(File))]
         public async Task<IActionResult> SynthesizeSpeech([FromQuery] SynthesizeSpeechCommandDto synthesizeSpeechQueryDto)
